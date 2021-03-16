@@ -8,8 +8,10 @@ $params = array_merge(
 
 return [
     'id' => 'app-frontend',
+    'name' => 'FreeCodeTube',
     'basePath' => dirname(__DIR__),
     'bootstrap' => ['log'],
+    'defaultRoute' => '/video/index',
     'controllerNamespace' => 'frontend\controllers',
     'components' => [
         'request' => [

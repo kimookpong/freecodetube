@@ -20,9 +20,11 @@ $this->params['breadcrumbs'][] = $this->title;
         </div>
         <p class="m-0">ลากและวางไฟล์วิดีโอเพื่ออัปโหลด</p>
         <p class="text-muted">วิดีโอจะเป็นแบบส่วนตัวจนกว่าคุณจะเผยแพร่</p>
-        <?php  \yii\bootstrap4\ActiveForm::begin([
+        <?php $form = \yii\bootstrap4\ActiveForm::begin([
             'options' => ['enctype' => 'multipart/form-data']
         ]) ?>
+
+        <?php echo $form->errorSummary($model);?>
         <button class="btn btn-primary btn-file">
             Selected File
             <input type="file" id="videoFile" name="video">

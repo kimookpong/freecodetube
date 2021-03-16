@@ -6,6 +6,10 @@ use Yii;
 use yii\behaviors\TimestampBehavior;
 use yii\helpers\FileHelper;
 use yii\behaviors\BlameableBehavior;
+use yii\imagine\Image;
+use Imagine\Gd;
+use Imagine\Image\Box;
+use Imagine\Image\BoxInterface;
 
 /**
  * This is the model class for table "{{%videos}}".
@@ -26,10 +30,14 @@ use yii\behaviors\BlameableBehavior;
  */
 class Video extends \yii\db\ActiveRecord
 {
+    const STATUS_UNLISTED = 0;
+    const STATUS_PUBLISHED = 1;
      /**
      * @var \yii\web\uploadedFile
      */
     public $video;
+
+    public $thumnail;
     /**
      * {@inheritdoc}
      */
@@ -60,6 +68,10 @@ class Video extends \yii\db\ActiveRecord
             [['video_id'], 'string', 'max' => 16],
             [['title', 'tags', 'video_name'], 'string', 'max' => 512],
             [['video_id'], 'unique'],
+            ['has_thumnail','default','value' => 0],
+            ['status','default','value' => self::STATUS_UNLISTED],
+            ['thumnail','image','minWidth'=>300],
+            ['video','file','extensions' => ['mp4']],
             [['created_by'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['created_by' => 'id']],
         ];
     }
@@ -81,6 +93,15 @@ class Video extends \yii\db\ActiveRecord
             'updated_at' => 'Updated At',
             'created_by' => 'Created By',
             'updated_by' => 'Updated By',
+            'thumnail' => 'Thumbnail'
+        ];
+    }
+
+    public function getStatusLabels()
+    {
+        return [
+            self::STATUS_UNLISTED => 'Unlisted',
+            self::STATUS_PUBLISHED => 'Published',
         ];
     }
 
@@ -114,6 +135,9 @@ class Video extends \yii\db\ActiveRecord
             $this->video_name = $this->video->name;
         }
 
+        if($this->thumnail){
+            $this->has_thumnail = 1;
+        }
 
         $saved = parent::save($runValidation,$attributeNames);
 
@@ -129,7 +153,46 @@ class Video extends \yii\db\ActiveRecord
             }
             $this->video->saveAs($videoPath);
         }
+        if($this->thumnail){
+            $thumnailPath = Yii::getAlias('@frontend/web/storage/thumbs/'.$this->video_id.'.jpg');
+
+            if(!is_dir(dirname($thumnailPath))){
+               FileHelper::createDirectory(dirname($thumnailPath));
+            }
+            $this->thumnail->saveAs($thumnailPath);
+            Image::getImagine()
+                    ->open($thumnailPath)
+                    ->thumbnail(new Box(1280,1280))
+                    ->save();
+        }
         return true;
     }
+
+    public function getVideoLink()
+    {
+        return Yii::$app->params['frontendUrl'].'/storage/videos/'.$this->video_id.'.mp4';
+    }
+
+    public function getThumbnailLink()
+    {
+        return $this->has_thumnail ? 
+        Yii::$app->params['frontendUrl'].'/storage/thumbs/'.$this->video_id.'.jpg'
+        : '' ;
+    }
+
+    public function afterDelete()
+    {
+        parent::afterDelete();
+        $videoPath = Yii::getAlias('@frontend/web/storage/videos/'.$this->video_id.'.mp4');
+        unlink($videoPath);
+
+        $thumnailPath = Yii::getAlias('@frontend/web/storage/thumbs/'.$this->video_id.'.jpg');
+
+        if(file_exists($thumnailPath)) {
+            unlink($thumnailPath);
+        }
+        
+    }
+
 }
 

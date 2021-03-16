@@ -11,6 +11,7 @@ use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
 use yii\web\UploadedFile;
 use yii\base\Behavior;
+use yii\filters\AccessControl;
 
 
 /**
@@ -24,6 +25,15 @@ class VideoController extends Controller
     public function behaviors()
     {
         return [
+            'access' => [
+                'class' => AccessControl::class,
+                'rules' => [
+                    [
+                        'allow' => true,
+                        'roles' => ['@'],
+                    ],
+                ],
+            ],
             'verbs' => [
                 'class' => VerbFilter::className(),
                 'actions' => [
@@ -40,7 +50,7 @@ class VideoController extends Controller
     public function actionIndex()
     {
         $dataProvider = new ActiveDataProvider([
-            'query' => Video::find(),
+            'query' => Video::find()->creator(Yii::$app->user->id)->lastest(),
         ]);
 
         return $this->render('index', [
@@ -73,7 +83,7 @@ class VideoController extends Controller
         $model->video = UploadedFile::getInstanceByName('video');
 
         if (Yii::$app->request->isPost && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->video_id]);
+            return $this->redirect(['update', 'id' => $model->video_id]);
         }
 
         
@@ -94,8 +104,10 @@ class VideoController extends Controller
     {
         $model = $this->findModel($id);
 
+        $model->thumnail = UploadedFile::getInstanceByname('thumnail');
+
         if ($model->load(Yii::$app->request->post()) && $model->save()) {
-            return $this->redirect(['view', 'id' => $model->video_id]);
+            return $this->redirect(['update', 'id' => $model->video_id]);
         }
 
         return $this->render('update', [
