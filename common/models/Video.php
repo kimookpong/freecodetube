@@ -32,7 +32,7 @@ class Video extends \yii\db\ActiveRecord
 {
     const STATUS_UNLISTED = 0;
     const STATUS_PUBLISHED = 1;
-     /**
+    /**
      * @var \yii\web\uploadedFile
      */
     public $video;
@@ -68,10 +68,10 @@ class Video extends \yii\db\ActiveRecord
             [['video_id'], 'string', 'max' => 16],
             [['title', 'tags', 'video_name'], 'string', 'max' => 512],
             [['video_id'], 'unique'],
-            ['has_thumnail','default','value' => 0],
-            ['status','default','value' => self::STATUS_UNLISTED],
-            ['thumnail','image','minWidth'=>300],
-            ['video','file','extensions' => ['mp4']],
+            ['has_thumnail', 'default', 'value' => 0],
+            ['status', 'default', 'value' => self::STATUS_UNLISTED],
+            ['thumnail', 'image', 'minWidth' => 300],
+            ['video', 'file', 'extensions' => ['mp4']],
             [['created_by'], 'exist', 'skipOnError' => true, 'targetClass' => User::className(), 'targetAttribute' => ['created_by' => 'id']],
         ];
     }
@@ -124,75 +124,82 @@ class Video extends \yii\db\ActiveRecord
         return new \common\models\query\VideoQuery(get_called_class());
     }
 
-    public function save($runValidation = true,$attributeNames = null)
+    public function save($runValidation = true, $attributeNames = null)
     {
         $isInsert = $this->isNewRecord;
 
-  
-        if ($isInsert){
+
+        if ($isInsert) {
             $this->video_id = Yii::$app->security->generateRandomString(8);
             $this->title = $this->video->name;
             $this->video_name = $this->video->name;
         }
 
-        if($this->thumnail){
+        if ($this->thumnail) {
             $this->has_thumnail = 1;
         }
 
-        $saved = parent::save($runValidation,$attributeNames);
+        $saved = parent::save($runValidation, $attributeNames);
 
 
-        if(!$saved){
+        if (!$saved) {
             return false;
         }
-        if($isInsert){
-            $videoPath = Yii::getAlias('@frontend/web/storage/videos/'.$this->video_id.'.mp4');
+        if ($isInsert) {
+            $videoPath = Yii::getAlias('@frontend/web/storage/videos/' . $this->video_id . '.mp4');
 
-            if(!is_dir(dirname($videoPath))){
-               FileHelper::createDirectory(dirname($videoPath));
+            if (!is_dir(dirname($videoPath))) {
+                FileHelper::createDirectory(dirname($videoPath));
             }
             $this->video->saveAs($videoPath);
         }
-        if($this->thumnail){
-            $thumnailPath = Yii::getAlias('@frontend/web/storage/thumbs/'.$this->video_id.'.jpg');
+        if ($this->thumnail) {
+            $thumnailPath = Yii::getAlias('@frontend/web/storage/thumbs/' . $this->video_id . '.jpg');
 
-            if(!is_dir(dirname($thumnailPath))){
-               FileHelper::createDirectory(dirname($thumnailPath));
+            if (!is_dir(dirname($thumnailPath))) {
+                FileHelper::createDirectory(dirname($thumnailPath));
             }
             $this->thumnail->saveAs($thumnailPath);
             Image::getImagine()
-                    ->open($thumnailPath)
-                    ->thumbnail(new Box(1280,1280))
-                    ->save();
+                ->open($thumnailPath)
+                ->thumbnail(new Box(1280, 1280))
+                ->save();
         }
         return true;
     }
 
     public function getVideoLink()
     {
-        return Yii::$app->params['frontendUrl'].'/storage/videos/'.$this->video_id.'.mp4';
+        return Yii::$app->params['frontendUrl'] . '/storage/videos/' . $this->video_id . '.mp4';
     }
 
     public function getThumbnailLink()
     {
-        return $this->has_thumnail ? 
-        Yii::$app->params['frontendUrl'].'/storage/thumbs/'.$this->video_id.'.jpg'
-        : '' ;
+        return $this->has_thumnail ?
+            Yii::$app->params['frontendUrl'] . '/storage/thumbs/' . $this->video_id . '.jpg'
+            : '';
+    }
+
+    /**
+     * Gets query for [[CreatedBy]].
+     *
+     * @return \yii\db\ActiveQuery
+     */
+    public function getViews()
+    {
+        return $this->hasMany(VideoView::class, ['video_id' => 'video_id']);
     }
 
     public function afterDelete()
     {
         parent::afterDelete();
-        $videoPath = Yii::getAlias('@frontend/web/storage/videos/'.$this->video_id.'.mp4');
+        $videoPath = Yii::getAlias('@frontend/web/storage/videos/' . $this->video_id . '.mp4');
         unlink($videoPath);
 
-        $thumnailPath = Yii::getAlias('@frontend/web/storage/thumbs/'.$this->video_id.'.jpg');
+        $thumnailPath = Yii::getAlias('@frontend/web/storage/thumbs/' . $this->video_id . '.jpg');
 
-        if(file_exists($thumnailPath)) {
+        if (file_exists($thumnailPath)) {
             unlink($thumnailPath);
         }
-        
     }
-
 }
-
