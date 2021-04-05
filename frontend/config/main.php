@@ -10,9 +10,10 @@ return [
     'id' => 'app-frontend',
     'name' => 'FreeCodeTube',
     'basePath' => dirname(__DIR__),
-    'bootstrap' => ['log'],
-    'defaultRoute' => '/video/index',
     'controllerNamespace' => 'frontend\controllers',
+    'bootstrap' => ['log'],
+    'modules' => [],
+    'language' => 'en-US',
     'components' => [
         'request' => [
             'csrfParam' => '_csrf-frontend',
@@ -44,7 +45,9 @@ return [
             'showScriptName' => false,
             'rules' => [],
         ],
-
+        'assetManager' => [
+            'appendTimestamp' => true,
+        ]
     ],
     'params' => $params,
 ];
