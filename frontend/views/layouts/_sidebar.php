@@ -1,5 +1,5 @@
-
 <?php
+
 use yii\bootstrap4\Nav;
 ?>
 <aside class="shadow">
@@ -10,7 +10,7 @@ use yii\bootstrap4\Nav;
         'items' => [
             [
                 'label' => 'Dashboard',
-                'url' => ['/video/index']
+                'url' => ['/site/index']
             ],
             [
                 'label' => 'Videos',
